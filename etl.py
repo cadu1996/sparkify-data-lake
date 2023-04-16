@@ -43,7 +43,7 @@ def create_spark_session() -> SparkSession:
     """
 
     spark = SparkSession.builder.config(
-        "spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.2"
+        "spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.1"
     ).getOrCreate()
     
     return spark
