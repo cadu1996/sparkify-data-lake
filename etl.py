@@ -45,7 +45,7 @@ def create_spark_session() -> SparkSession:
     spark = SparkSession.builder.config(
         "spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.1"
     ).getOrCreate()
-    
+
     return spark
 
 
@@ -74,11 +74,13 @@ def process_song_data(spark: SparkSession, input_data: str, output_data: str) ->
         col("artist_id"),
         col("year"),
         col("duration"),
-        col("artist_name")
+        col("artist_name"),
     ).distinct()
 
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.parquet(output_data + "songs_table", mode="overwrite")
+    songs_table.write.partitionBy("year", "artist_id").parquet(
+        output_data + "songs_table", mode="overwrite"
+    )
 
     # extract columns to create artists table
     artists_table = df.select(
@@ -120,10 +122,8 @@ def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> 
         col("firstName").alias("first_name"),
         col("lastName").alias("last_name"),
         col("gender"),
-        col("level")
+        col("level"),
     ).distinct()
-
-
 
     # write users table to parquet files
     users_table.write.parquet(output_data + "users_table", mode="overwrite")
@@ -152,7 +152,9 @@ def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> 
     ).distinct()
 
     # write time table to parquet files partitioned by year and month
-    time_table.write.parquet(output_data + "time_table", mode="overwrite")
+    time_table.write.partitionBy("year", "month").parquet(
+        output_data + "time_table", mode="overwrite"
+    )
 
     # read in song data to use for songplays table
     song_df = spark.read.parquet(output_data + "songs_table")
@@ -169,11 +171,13 @@ def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> 
         col("artist_id"),
         col("sessionId").alias("session_id"),
         col("location"),
-        col("userAgent").alias("user_agent")
+        col("userAgent").alias("user_agent"),
+        year(col("timestamp")).alias("year"),
+        month(col("timestamp")).alias("month"),
     )
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.write.parquet(
+    songplays_table.write.partitionBy("year", "month").parquet(
         output_data + "songplays_table", mode="overwrite"
     )
 
