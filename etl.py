@@ -1,6 +1,6 @@
 """
-This script is used to extract data from S3, process that data using Spark, and load the data back into S3.
-This will be done in two steps:
+This script is used to extract data from S3, process that data using Spark, and
+load the data back into S3. This will be done in two steps:
 
     1. Load song_data and log_data from S3
     2. Process the data into analytics tables using Spark
@@ -27,8 +27,12 @@ from pyspark.sql.functions import (
 config = configparser.ConfigParser()
 config.read("dl.cfg")
 
-os.environ["AWS_ACCESS_KEY_ID"] = config.get("AWS", "AWS_ACCESS_KEY_ID")
-os.environ["AWS_SECRET_ACCESS_KEY"] = config.get("AWS", "AWS_SECRET_ACCESS_KEY")
+os.environ["AWS_ACCESS_KEY_ID"] = (
+    config.get("AWS", "AWS_ACCESS_KEY_ID")
+)
+os.environ["AWS_SECRET_ACCESS_KEY"] = (
+    config.get("AWS", "AWS_SECRET_ACCESS_KEY")
+)
 
 
 def create_spark_session() -> SparkSession:
@@ -49,7 +53,11 @@ def create_spark_session() -> SparkSession:
     return spark
 
 
-def process_song_data(spark: SparkSession, input_data: str, output_data: str) -> None:
+def process_song_data(
+        spark: SparkSession,
+        input_data: str,
+        output_data: str
+) -> None:
     """
     Process song data
 
@@ -92,10 +100,17 @@ def process_song_data(spark: SparkSession, input_data: str, output_data: str) ->
     ).distinct()
 
     # write artists table to parquet files
-    artists_table.write.parquet(output_data + "artists_table", mode="overwrite")
+    artists_table.write.parquet(
+        output_data + "artists_table",
+        mode="overwrite"
+    )
 
 
-def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> None:
+def process_log_data(
+        spark: SparkSession,
+        input_data: str,
+        output_data: str
+) -> None:
     """
     Process log data
 
@@ -130,8 +145,13 @@ def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> 
 
     # create timestamp column from original timestamp column
     get_timestamp = udf(
-        lambda x: datetime.fromtimestamp(x / 1000.0).strftime("%Y-%m-%d %H:%M:%S")
+        lambda x: (
+            datetime
+            .fromtimestamp(x / 1000.0)
+            .strftime("%Y-%m-%d %H:%M:%S")
+        )
     )
+
     df = df.withColumn("timestamp", get_timestamp(df.ts))
 
     # create datetime column from original timestamp column
@@ -161,7 +181,8 @@ def process_log_data(spark: SparkSession, input_data: str, output_data: str) -> 
 
     # extract columns from joined song and log datasets to create songplays table
     songplays_table = df.join(
-        song_df, (col("song") == col("title")) & (col("artist") == col("artist_name"))
+        song_df,
+        (col("song") == col("title")) & (col("artist") == col("artist_name"))
     ).select(
         monotonically_increasing_id().alias("songplay_id"),
         col("timestamp").alias("start_time"),
